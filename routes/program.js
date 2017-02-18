@@ -9,7 +9,7 @@ router.use(bodyParser.urlencoded({extended: true}));
 const request = require('request');
 
 const period = 5 * 60 * 1000;	// 5 min
-const rate = 16000;
+const rate = 48000;
 
 function uuid() {
 	var uuid = "", i, random;
