@@ -18,7 +18,7 @@ const execSync = require('child_process').execSync;
 const request = require('request');
 
 
-function analyze(file, groupId, data_id, sample_rate, callback) {
+function analyze(file, groupId, data_id, sample_rate, audio_period, audio_count, callback) {
 
 	const period = 5; // Sec
 
@@ -89,7 +89,7 @@ function analyze(file, groupId, data_id, sample_rate, callback) {
 				//var value = 20 * Math.log(spl / avg_of_samples);
 				//var value = spl / avg_of_samples;
 				var value = spl;
-				const time = key * period;
+				const time = key * period + audio_period / 1000 * audio_count;
 
 				const options = {
 					uri: "https://mbshackmit.cybozu.com/k/v1/record.json",
@@ -144,6 +144,8 @@ router.post('/', upload.single('file'), function(req, res) {
 	groupId = json.group_id;
 	dataId = json.data_id;
 	sampleRate = json.sample_rate;
+	audioPeriod = json.audio_period;
+	audioCount = json.audio_count;
 
 	if (groupId == null) {
 		res.send('No group id');	
@@ -162,17 +164,26 @@ router.post('/', upload.single('file'), function(req, res) {
 		return;
 	}
 
+	if (audioPeriod == null) {
+		res.send('No audio period');
+	}
+
+	if (audioCount == null) {
+		res.send('No audio count');
+	}
 
 	if (req.file != null) {
 		const audiofile = req.file;
 
-		analyze(audiofile.path, groupId, dataId, sampleRate, function(result, err) {
+		analyze(audiofile.path, groupId, dataId, sampleRate, audioPeriod, audioCount, function(result, err) {
 			if (err)
 				res.send({error:err});
 				
 			data = {
 				group_id: groupId,
 				data_id: dataId,
+				audio_period: audioPeriod,
+				audio_count: audioCount,
 				result: result
 			}
 
@@ -185,13 +196,15 @@ router.post('/', upload.single('file'), function(req, res) {
 		const filename = uploadPath + dataId + '.wav';
 		fs.writeFileSync(filename, json.filedata);
 
-		analyze(filename, groupId, dataId, sampleRate, function(result, err) {
+		analyze(audiofile.path, groupId, dataId, sampleRate, audioPeriod, audioCount, function(result, err) {
 			if (err)
 				res.send({error:err});
 				
 			data = {
 				group_id: groupId,
 				data_id: dataId,
+				audio_period: audioPeriod,
+				audio_count: audioCoubnt,
 				result: result
 			}
 
