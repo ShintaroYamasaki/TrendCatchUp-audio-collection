@@ -17,9 +17,6 @@
     "pcm": "^1.0.3",
     "puid": "^1.0.5",
     "request": "^2.79.0",
-    "speaker": "^0.3.0",
-    "w3c-xmlhttprequest": "^2.1.2",
-    "web-audio-api": "^0.2.2",
-    "xmlhttprequest": "^1.8.0"
+    "web-audio-api": "^0.2.2"
   }
 }
