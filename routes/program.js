@@ -24,7 +24,6 @@ function uuid() {
 
 
 router.get('/', function(req, res) {
-		//url: 'https://mbshackmit.cybozu.com/k/v1/records.json?app=3&query=start%5Fdatetime%20%3E%20NOW%28%29%20order%20by%20start%5Fdatetime%20asc%20limit%201',
 	var options = {
 		url: 'https://mbshackmit.cybozu.com/k/v1/records.json?app=3&query=start%5Fdatetime%20%3E%20NOW%28%29%20order%20by%20start%5Fdatetime%20asc%20limit%201',
 		headers: {
@@ -57,7 +56,7 @@ router.get('/', function(req, res) {
 				 
 				console.log(msg);
 
-				res.send(msg);	
+				res.send(msg);
 			}
 			
 		} else {

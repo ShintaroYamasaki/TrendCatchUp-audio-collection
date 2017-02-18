@@ -7,8 +7,7 @@ router.use(bodyParser.urlencoded({extended: true}));
 const async = require('async');
 const request = require('request');
 
-//const period = 5;
-const period = 1;
+var period = null;
 
 router.get('/', function(req, res) {
 	console.log(req.query);
@@ -16,10 +15,11 @@ router.get('/', function(req, res) {
 
 	if (groupId == null) {
 		res.send('No group id');
+		return;
 	}
 
 	var options = {
-		url: 'https://mbshackmit.cybozu.com/k/v1/records.json?app=5&query=group_id%20%3d%20' + groupId + '%20order%20by%20time_sec%20asc',
+		url: 'https://mbshackmit.cybozu.com/k/v1/records.json?app=5&query=group_id%20%3d%20' + groupId + '%20order%20by%20time_sec%20asc%20limit%20500',
 		headers: {
 			"X-Cybozu-API-Token": "ENiRtxkhPbhGY8jiV7eq8bZq9FR1DiSCXkmTYQZa"
 		}
@@ -40,15 +40,19 @@ router.get('/', function(req, res) {
 				var num_of_samples = 0;
 
 				var count = 0;
+
+				console.log(records.length);
 				
 				async.each(records, function(record, next) {
-					sum += Number(record.value.value);
-					count += 1;
 
-					if (Number(record.time_sec) != current_time) {
-						current_time += 5;
+					console.log(record.time_sec.value);
+					if (Number(record.time_sec.value) != current_time) {
+						console.log(current_time);
+						if (period == null) {
+							period = Number(record.time_sec.value) - current_time;
+						}
+						current_time += period;
 						var sample = sum / count;
-						console.log(sum + ' ' + count);
 
 						samples.push(sample);
 
@@ -58,10 +62,15 @@ router.get('/', function(req, res) {
 						sum = 0;
 						count = 0;
 					}
+
+					sum += Number(record.value.value);
+					count += 1;
+
 					next();
 				}, function complete(err) {
 					const avg_of_samples = sum_of_samples / num_of_samples;
 
+					// audio all
 					samples.forEach(function(spl, key) {
 						console.log(spl);
 						var value = spl / avg_of_samples;
@@ -75,6 +84,43 @@ router.get('/', function(req, res) {
 							},
 							body: {
 								"app":8,
+								"record":{
+									"group_id":{
+										"value":groupId
+									},
+									"value":{
+										"value":value
+									},
+									"time_sec":{
+										"value":time
+									}
+								}
+							},
+							json:true
+						};
+						request.post(options, function(error, response, body){
+							if (err) {
+								console.log(body);
+								throw new Error(error);
+							}
+							console.log(body);
+						});
+					});
+
+					// integrate 
+					samples.forEach(function(spl, key) {
+						console.log(spl);
+						var value = spl / avg_of_samples;
+						const time = key * period;
+
+						const options = {
+							uri: "https://mbshackmit.cybozu.com/k/v1/record.json",
+							headers: {
+								"Content-type": "application/json",
+								"X-Cybozu-API-Token": "bkfzVnpXNormsJRdUVa2GAbuRpNU3eVlycUk2NtD"
+							},
+							body: {
+								"app":11,
 								"record":{
 									"group_id":{
 										"value":groupId
