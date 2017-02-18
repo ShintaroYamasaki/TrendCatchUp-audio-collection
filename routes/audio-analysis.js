@@ -18,9 +18,7 @@ const execSync = require('child_process').execSync;
 const request = require('request');
 
 
-function analyze(file, groupId, data_id, callback) {
-
-	const sample_rate = 44100;
+function analyze(file, groupId, data_id, sample_rate, callback) {
 
 	const period = 5; // Sec
 
@@ -89,7 +87,8 @@ function analyze(file, groupId, data_id, callback) {
 			samples.forEach(function(spl, key) {
 				//const value = (spl - min_of_samples) / max_of_samples;
 				//var value = 20 * Math.log(spl / avg_of_samples);
-				var value = spl / avg_of_samples;
+				//var value = spl / avg_of_samples;
+				var value = spl;
 				const time = key * period;
 
 				const options = {
@@ -129,7 +128,7 @@ function analyze(file, groupId, data_id, callback) {
 				sum: sum_of_samples,
 				avg: avg_of_samples,
 				rate: sample_rate,
-				period: period
+				period: period * 1000
 			};
 
 			callback(data, null);
@@ -139,37 +138,41 @@ function analyze(file, groupId, data_id, callback) {
 }
 
 
-function uuid() {
-	var uuid = "", i, random;
-	for (i = 0; i < 32; i++) {
-		random = Math.random() * 16 | 0;
-
-		uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
-	}
-	return uuid;
-}
-
 router.post('/', upload.single('file'), function(req, res) {
 	json = JSON.parse(req.body.json);
 	console.log(json.group_id);
 	groupId = json.group_id;
+	dataId = json.data_id;
+	sampleRate = json.sample_rate;
 
 	if (groupId == null) {
-		groupId = 0;	
+		res.send('No group id');	
+
+		return;
 	} 
 
-	data_id = uuid();
+	if (dataId == null) {
+		res.send('No data id');
+
+		return;
+	}
+
+	if (sampleRate == null) {
+		res.send("No sampling rate");
+		return;
+	}
+
 
 	if (req.file != null) {
 		const audiofile = req.file;
 
-		analyze(audiofile.path, groupId, data_id, function(result, err) {
+		analyze(audiofile.path, groupId, dataId, sampleRate, function(result, err) {
 			if (err)
 				res.send({error:err});
 				
 			data = {
 				group_id: groupId,
-				data_id: data_id,
+				data_id: dataId,
 				result: result
 			}
 
@@ -179,16 +182,16 @@ router.post('/', upload.single('file'), function(req, res) {
 	} else if (json.filedata != null) {
 		console.log('data');
 
-		const filename = uploadPath + data_id + '.wav';
+		const filename = uploadPath + dataId + '.wav';
 		fs.writeFileSync(filename, json.filedata);
 
-		analyze(filename, groupId, data_id, function(result, err) {
+		analyze(filename, groupId, dataId, sampleRate, function(result, err) {
 			if (err)
 				res.send({error:err});
 				
 			data = {
 				group_id: groupId,
-				data_id: data_id,
+				data_id: dataId,
 				result: result
 			}
 
