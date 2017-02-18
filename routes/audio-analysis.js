@@ -20,7 +20,7 @@ const request = require('request');
 
 function analyze(file, groupId, data_id, sample_rate, audio_period, audio_count, callback) {
 
-	const period = 5; // Sec
+	//const period = 1; // Sec
 
 	var samples = [];
 

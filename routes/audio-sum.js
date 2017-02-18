@@ -7,7 +7,8 @@ router.use(bodyParser.urlencoded({extended: true}));
 const async = require('async');
 const request = require('request');
 
-const period = 5;
+//const period = 5;
+const period = 1;
 
 router.get('/', function(req, res) {
 	console.log(req.query);
